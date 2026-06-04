@@ -1,0 +1,88 @@
+syntax="proto3";
+
+package video;
+
+option go_package="ourvideos/proto/video";
+
+
+service VideoService{
+  rpc CreateVideo(CreateVideoReq)returns(CreateVideoResp);
+  rpc GetVideo(GerVideoReq)returns(GetVideoResp);
+  rpc ListVideo(ListVideoReq)returns(ListVideoResp);
+  rpc SearchVideo(SearchVideosReq)returns(SearchVideosResp);
+}
+
+message VideoInfo {
+  uint64 id = 1;
+  string title = 2;        // 标题
+  string description = 3;  // 简介
+  string category = 4;     // 分类: 电影/电视剧/动漫/纪录片/综艺
+  string poster_url = 5;   // 封面图 URL（通过 /upload 上传后存库）
+  string video_url = 6;    // 视频文件 URL
+  int32 duration = 7;      // 时长（秒），前端自己格式化成 "2h 13m"
+  string tags = 8;         // 标签，逗号分隔 "科幻,冒险,史诗"
+  int32 year = 9;          // 年份
+  double rating = 10;      // 评分 0-10
+  int64 play_count = 11;   // 播放次数
+  int64 like_count = 12;   // 点赞数
+  uint64 user_id = 13;     // 上传者 ID
+  string created_at = 14;  // 上传时间
+}
+
+// 排序方式
+enum SortBy {
+  SORT_BY_UNSPECIFIED = 0;
+  SORT_BY_LATEST = 1;      // 最新上传
+  SORT_BY_POPULAR = 2;     // 最热（播放量）
+  SORT_BY_RATING = 3;      // 最高评分
+}
+
+message CreateVideoReq{
+  string title=1;
+  string description=2;
+  string category=3;
+  string poster_url=4;
+  string video_url=5;
+  int32 duration=6;
+  string tag=7;
+  int32 year=8;
+}
+
+message CreateVideoResp{
+  VideoInfo video=1;
+}
+
+message GerVideoReq{
+  uint64 id=1;
+}
+
+message GetVideoResp{
+  VideoInfo video=1;
+}
+
+message ListVideoReq{
+  string category=1;
+  //排序方式
+  SortBy sort_by=2;
+  //分页
+  int32 offset=3;
+  int64 limit=4;
+  uint64 user_id=5;
+
+}
+
+message ListVideoResp{
+  repeated VideoInfo videos=1; // 可以包含 0 个、1 个或多个 VideoInfo
+  int32 total=2;//总数，前端做分页
+}
+
+message SearchVideosReq{
+  string query=1;
+  int32 offset=2;
+  int32 limit=3;
+}
+message SearchVideosResp{
+  repeated VideoInfo videos=1;
+  int32 total=2;
+
+}

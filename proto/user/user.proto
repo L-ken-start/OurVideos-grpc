@@ -1,0 +1,82 @@
+syntax="proto3";
+
+//protoc --proto_path=proto --go_out=proto --go_opt=paths=source_relative --go-grpc_out=proto --go-grpc_opt=paths=source_relative proto/user.proto
+
+package user;
+
+option go_package="ourvideos/proto/user";
+
+
+service UserService{
+  rpc Register(RegisterReq) returns (RegisterResp);
+  rpc Login(LoginReq) returns (LoginResp);
+  rpc GetUser(GetUserReq) returns (GetUserResp);
+  rpc UserUpdate(UserUpdateReq) returns (UserUpdateResp);
+  rpc PswUpdate(PswUpdateReq) returns (PswUpdateResp);
+}
+
+message PswUpdateReq{
+
+  string oldpsw=1;
+  string newpsw=2;
+  uint32 id=3;
+}
+message PswUpdateResp{
+  uint32 id=1;
+}
+
+message RegisterReq {
+  string username = 1;
+  string password = 2;
+  string email = 3;
+}
+
+message RegisterResp {
+  uint64 id = 1;
+  string token = 2;
+}
+
+message LoginReq {
+  string username = 1;
+  string password = 2;
+}
+
+message LoginResp {
+  string token = 1;
+  uint64 user_id = 2;
+}
+
+message GetUserReq {
+  uint64 id = 1;
+}
+
+message GetUserResp {
+  uint64 id = 1;
+  string username = 2;
+  string email = 3;
+  string nickname = 4;
+  string avatar = 5;
+  string bio = 6;
+  int32 gender = 7;
+  string phone = 8;
+}
+
+message UserUpdateReq {
+  uint64 id = 1;
+  string username = 2;
+  string email = 3;
+  string avatar = 4;
+  string bio = 5;
+  int32 gender = 6;
+  string phone = 7;
+}
+
+message UserUpdateResp {
+  uint64 id = 1;
+  string username = 2;
+  string email = 3;
+  string avatar = 4;
+  string bio = 5;
+  int32 gender = 6;
+  string phone = 7;
+}

@@ -1,0 +1,48 @@
+# ==================== Go ====================
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+
+# ==================== Node / Vue ====================
+node_modules/
+dist/
+.nuxt
+.output
+
+# ==================== IDE ====================
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+
+# ==================== OS ====================
+Thumbs.db
+.DS_Store
+Desktop.ini
+
+# ==================== Environment ====================
+.env
+.env.local
+.env.production
+
+# ==================== Build / Cache ====================
+*.log
+__pycache__/
+*.pyc
+.cache/
+
+# ==================== Static (generated at runtime) ====================
+static/avatars/
+static/posters/
+static/covers/
+
+# ==================== Reasonix internals ====================
+.reasonix/truncated-results/
+.reasonix/skills/
