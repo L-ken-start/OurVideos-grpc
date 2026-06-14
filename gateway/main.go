@@ -9,29 +9,58 @@ import (
 )
 
 func main() {
-	//连接用户grpc服务
-	userClient, conn, err := client.NewUserClient("localhost:50051")
+	// 连接 user-service
+	userClient, userConn, err := client.NewUserClient("localhost:50051")
 	if err != nil {
-		log.Fatalf("connect user fail,err:%v", err)
+		log.Fatalf("connect user-service fail: %v", err)
 	}
-	defer conn.Close()
+	defer userConn.Close()
+
+	// 连接 video-service
+	videoClient, videoConn, err := client.NewVideoClient("localhost:50052")
+	if err != nil {
+		log.Fatalf("connect video-service fail: %v", err)
+	}
+	defer videoConn.Close()
+	//连接comment-service
+	commentClient, commentConn, err := client.NewCommentClient("localhost:50053")
+	if err != nil {
+		log.Fatalf("connect comment-service fail: %v", err)
+	}
+	defer commentConn.Close()
 
 	//创建gin引擎
 	r := gin.Default()
 	r.Static("/static", "./static")
 	h := &handler.UserHandler{Client: userClient}
+	videoH := &handler.VideoHandler{Client: videoClient}
+	commentH := &handler.CommentHandler{Client: commentClient, UserClient: userClient}
 	uploadH := &handler.UploadHandler{}
 
-	//注册路由
+	//用户注册路由
 	r.POST("/user/register", h.Register)
 	r.POST("/user/login", h.Login)
+	//视频显示路由
+	r.GET("/videos", videoH.ListVideo)
+	r.GET("/videos/search", videoH.SearchVideos)
+
+	//获取评论列表（公开）
+	r.GET("/videos/:id/comments", commentH.ListComments)
 
 	auth := r.Group("/", middleware.JWTAuth())
 	{
+
 		auth.GET("/user/:id", h.GetUser)
 		auth.PUT("/user/update", h.UserUpdate)
 		auth.POST("/upload", uploadH.Upload)
 		auth.PUT("/user/update/password", h.PswUpdate)
+		// 发评论需登录
+		auth.POST("/videos/:id/comments", commentH.AddComments)
+		auth.POST("/videos", videoH.CreateVideo)
+		auth.GET("/videos/:id", videoH.GetVideo)
+		auth.POST("/videos/:id/like", videoH.LikeVideo)
+		//评论业务
+		auth.POST("/comments/:id/like", commentH.LikeComment)
 	}
 
 	log.Println("Gin网关启动于：8888")

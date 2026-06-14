@@ -3,13 +3,15 @@ package server
 import (
 	"context"
 
+	"ourvideos/proto/comment"
 	"ourvideos/proto/user"
 	"ourvideos/user-service/service"
 )
 
 type UserServer struct {
 	user.UnimplementedUserServiceServer
-	Svc *service.UserService
+	Svc           *service.UserService
+	CommentClient comment.CommentServiceClient
 }
 
 // Register 注册
@@ -67,6 +69,17 @@ func (s *UserServer) UserUpdate(ctx context.Context, req *user.UserUpdateReq) (*
 	if err != nil {
 		return nil, toGRPCError(err)
 	}
+
+	// 头像变了 → 异步刷新 comment-service 里该用户所有评论的头像
+	if req.Avatar != "" {
+		go func() {
+			_, _ = s.CommentClient.UpdateCommentAvatar(context.Background(), &comment.UpdateAvatarReq{
+				Uid:    req.Id,
+				Avatar: req.Avatar,
+			})
+		}()
+	}
+
 	return &user.UserUpdateResp{
 		Id:       uint64(u.ID),
 		Username: u.Username,

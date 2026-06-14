@@ -1,11 +1,15 @@
 package main
 
 import (
-	"google.golang.org/grpc"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm" //都是v2版本
 	"log"
 	"net"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+
+	"ourvideos/proto/comment"
 	"ourvideos/proto/user"
 	"ourvideos/user-service/model"
 	"ourvideos/user-service/repository"
@@ -31,12 +35,23 @@ func main() {
 		log.Fatalf("监听失败:%v", err.Error())
 	}
 
+	// 连接 comment-service
+	commentConn, err := grpc.NewClient("localhost:50053", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("connect comment-service fail: %v", err)
+	}
+	defer commentConn.Close()
+	commentClient := comment.NewCommentServiceClient(commentConn)
+
 	// 依赖注入：db → repo → service → server
 	repo := repository.NewUserRepository(db)
 	svc := service.NewUserService(repo)
 
 	s := grpc.NewServer()
-	user.RegisterUserServiceServer(s, &server.UserServer{Svc: svc})
+	user.RegisterUserServiceServer(s, &server.UserServer{
+		Svc:           svc,
+		CommentClient: commentClient,
+	})
 
 	log.Println("User service listening on :50051")
 	if err := s.Serve(list); err != nil {

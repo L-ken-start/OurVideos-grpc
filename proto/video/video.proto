@@ -7,9 +7,10 @@ option go_package="ourvideos/proto/video";
 
 service VideoService{
   rpc CreateVideo(CreateVideoReq)returns(CreateVideoResp);
-  rpc GetVideo(GerVideoReq)returns(GetVideoResp);
+  rpc GetVideo(GetVideoReq) returns (GetVideoResp);
   rpc ListVideo(ListVideoReq)returns(ListVideoResp);
   rpc SearchVideo(SearchVideosReq)returns(SearchVideosResp);
+  rpc LikeVideo(LikeVideoReq)returns(LikeVideoResp);
 }
 
 message VideoInfo {
@@ -29,6 +30,19 @@ message VideoInfo {
   string created_at = 14;  // 上传时间
 }
 
+
+
+message LikeVideoReq{
+  uint64 uid=1;
+  uint64 comment_id=2;
+  uint64 video_id=3;
+  bool liked=4;
+}
+message LikeVideoResp{
+  int64 like_count=1;
+  bool is_liked=2;
+
+}
 // 排序方式
 enum SortBy {
   SORT_BY_UNSPECIFIED = 0;
@@ -37,27 +51,30 @@ enum SortBy {
   SORT_BY_RATING = 3;      // 最高评分
 }
 
-message CreateVideoReq{
-  string title=1;
-  string description=2;
-  string category=3;
-  string poster_url=4;
-  string video_url=5;
-  int32 duration=6;
-  string tag=7;
-  int32 year=8;
+message CreateVideoReq {
+  string title = 1;
+  string description = 2;
+  string category = 3;
+  string poster_url = 4;
+  string video_url = 5;
+  int32 duration = 6;
+  string tags = 7;
+  int32 year = 8;
 }
 
 message CreateVideoResp{
   VideoInfo video=1;
 }
 
-message GerVideoReq{
-  uint64 id=1;
+message GetVideoReq {
+  uint64 id = 1;
+  uint64 uid=2;
 }
 
 message GetVideoResp{
   VideoInfo video=1;
+  bool is_liked=2;
+
 }
 
 message ListVideoReq{
@@ -71,9 +88,9 @@ message ListVideoReq{
 
 }
 
-message ListVideoResp{
-  repeated VideoInfo videos=1; // 可以包含 0 个、1 个或多个 VideoInfo
-  int32 total=2;//总数，前端做分页
+message ListVideoResp {
+  repeated VideoInfo videos = 1;
+  int32 total = 2;
 }
 
 message SearchVideosReq{

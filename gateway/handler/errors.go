@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"net/http"
 )
 
@@ -20,4 +22,9 @@ func toHTTPStatusCode(code codes.Code) int {
 	default:
 		return http.StatusInternalServerError
 	}
+}
+
+func HandleGRPCError(c *gin.Context, err error) {
+	st := status.Convert(err)
+	c.JSON(toHTTPStatusCode(st.Code()), gin.H{"error": st.Message()})
 }

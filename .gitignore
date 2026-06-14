@@ -40,7 +40,7 @@ __pycache__/
 
 # ==================== Static (generated at runtime) ====================
 static/avatars/
-static/posters/
+gateway/static/posters/
 static/covers/
 
 # ==================== Reasonix internals ====================

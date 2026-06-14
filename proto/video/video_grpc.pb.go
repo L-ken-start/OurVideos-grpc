@@ -23,6 +23,7 @@ const (
 	VideoService_GetVideo_FullMethodName    = "/video.VideoService/GetVideo"
 	VideoService_ListVideo_FullMethodName   = "/video.VideoService/ListVideo"
 	VideoService_SearchVideo_FullMethodName = "/video.VideoService/SearchVideo"
+	VideoService_LikeVideo_FullMethodName   = "/video.VideoService/LikeVideo"
 )
 
 // VideoServiceClient is the client API for VideoService service.
@@ -30,9 +31,10 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type VideoServiceClient interface {
 	CreateVideo(ctx context.Context, in *CreateVideoReq, opts ...grpc.CallOption) (*CreateVideoResp, error)
-	GetVideo(ctx context.Context, in *GerVideoReq, opts ...grpc.CallOption) (*GetVideoResp, error)
+	GetVideo(ctx context.Context, in *GetVideoReq, opts ...grpc.CallOption) (*GetVideoResp, error)
 	ListVideo(ctx context.Context, in *ListVideoReq, opts ...grpc.CallOption) (*ListVideoResp, error)
 	SearchVideo(ctx context.Context, in *SearchVideosReq, opts ...grpc.CallOption) (*SearchVideosResp, error)
+	LikeVideo(ctx context.Context, in *LikeVideoReq, opts ...grpc.CallOption) (*LikeVideoResp, error)
 }
 
 type videoServiceClient struct {
@@ -53,7 +55,7 @@ func (c *videoServiceClient) CreateVideo(ctx context.Context, in *CreateVideoReq
 	return out, nil
 }
 
-func (c *videoServiceClient) GetVideo(ctx context.Context, in *GerVideoReq, opts ...grpc.CallOption) (*GetVideoResp, error) {
+func (c *videoServiceClient) GetVideo(ctx context.Context, in *GetVideoReq, opts ...grpc.CallOption) (*GetVideoResp, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetVideoResp)
 	err := c.cc.Invoke(ctx, VideoService_GetVideo_FullMethodName, in, out, cOpts...)
@@ -83,14 +85,25 @@ func (c *videoServiceClient) SearchVideo(ctx context.Context, in *SearchVideosRe
 	return out, nil
 }
 
+func (c *videoServiceClient) LikeVideo(ctx context.Context, in *LikeVideoReq, opts ...grpc.CallOption) (*LikeVideoResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LikeVideoResp)
+	err := c.cc.Invoke(ctx, VideoService_LikeVideo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // VideoServiceServer is the server API for VideoService service.
 // All implementations must embed UnimplementedVideoServiceServer
 // for forward compatibility.
 type VideoServiceServer interface {
 	CreateVideo(context.Context, *CreateVideoReq) (*CreateVideoResp, error)
-	GetVideo(context.Context, *GerVideoReq) (*GetVideoResp, error)
+	GetVideo(context.Context, *GetVideoReq) (*GetVideoResp, error)
 	ListVideo(context.Context, *ListVideoReq) (*ListVideoResp, error)
 	SearchVideo(context.Context, *SearchVideosReq) (*SearchVideosResp, error)
+	LikeVideo(context.Context, *LikeVideoReq) (*LikeVideoResp, error)
 	mustEmbedUnimplementedVideoServiceServer()
 }
 
@@ -104,7 +117,7 @@ type UnimplementedVideoServiceServer struct{}
 func (UnimplementedVideoServiceServer) CreateVideo(context.Context, *CreateVideoReq) (*CreateVideoResp, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateVideo not implemented")
 }
-func (UnimplementedVideoServiceServer) GetVideo(context.Context, *GerVideoReq) (*GetVideoResp, error) {
+func (UnimplementedVideoServiceServer) GetVideo(context.Context, *GetVideoReq) (*GetVideoResp, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetVideo not implemented")
 }
 func (UnimplementedVideoServiceServer) ListVideo(context.Context, *ListVideoReq) (*ListVideoResp, error) {
@@ -112,6 +125,9 @@ func (UnimplementedVideoServiceServer) ListVideo(context.Context, *ListVideoReq)
 }
 func (UnimplementedVideoServiceServer) SearchVideo(context.Context, *SearchVideosReq) (*SearchVideosResp, error) {
 	return nil, status.Error(codes.Unimplemented, "method SearchVideo not implemented")
+}
+func (UnimplementedVideoServiceServer) LikeVideo(context.Context, *LikeVideoReq) (*LikeVideoResp, error) {
+	return nil, status.Error(codes.Unimplemented, "method LikeVideo not implemented")
 }
 func (UnimplementedVideoServiceServer) mustEmbedUnimplementedVideoServiceServer() {}
 func (UnimplementedVideoServiceServer) testEmbeddedByValue()                      {}
@@ -153,7 +169,7 @@ func _VideoService_CreateVideo_Handler(srv interface{}, ctx context.Context, dec
 }
 
 func _VideoService_GetVideo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GerVideoReq)
+	in := new(GetVideoReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -165,7 +181,7 @@ func _VideoService_GetVideo_Handler(srv interface{}, ctx context.Context, dec fu
 		FullMethod: VideoService_GetVideo_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(VideoServiceServer).GetVideo(ctx, req.(*GerVideoReq))
+		return srv.(VideoServiceServer).GetVideo(ctx, req.(*GetVideoReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -206,6 +222,24 @@ func _VideoService_SearchVideo_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _VideoService_LikeVideo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LikeVideoReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VideoServiceServer).LikeVideo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: VideoService_LikeVideo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VideoServiceServer).LikeVideo(ctx, req.(*LikeVideoReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // VideoService_ServiceDesc is the grpc.ServiceDesc for VideoService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -228,6 +262,10 @@ var VideoService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SearchVideo",
 			Handler:    _VideoService_SearchVideo_Handler,
+		},
+		{
+			MethodName: "LikeVideo",
+			Handler:    _VideoService_LikeVideo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

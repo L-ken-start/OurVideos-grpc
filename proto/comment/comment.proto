@@ -1,0 +1,71 @@
+syntax="proto3";
+
+package comment;
+
+option go_package="ourvideos/proto/comment";
+
+service CommentService{
+  rpc ListComments(ListCommentsReq)returns(ListCommentsResp);
+  rpc AddComments(AddCommentsReq)returns(AddCommentsResp);
+
+  rpc LikeComment(LikeCommentReq)returns(LikeCommentResp);
+  rpc UpdateCommentAvatar(UpdateAvatarReq)returns(UpdateAvatarResp);
+}
+
+message Comment{
+  uint64 id=1;
+  uint64 video_id=2;
+  uint64 uid=3;
+  string username=4;
+  string create_at=5;
+  string content=6;
+  string avatar=7;
+  int64 like_count=8;
+  bool is_liked=9;
+}
+
+message ListCommentsReq{
+  uint64 video_id=1;
+  int32 offset=2;
+  int32 limit=3;
+  string sort=4;
+
+}
+message ListCommentsResp{
+  repeated Comment comment=1;
+  int32 total=2;
+}
+
+message AddCommentsReq{
+  uint64 uid=1;
+  uint64 video_id=2;
+  string content=3;
+  string create_at=4;
+  string username=5;
+  string avatar=6;
+  int64 like_count=7;
+
+}
+message AddCommentsResp{
+  Comment comment=1;
+}
+
+
+message LikeCommentReq{
+  uint64 uid=1;
+  uint64 comment_id=2;
+  uint64 video_id=3;
+  bool liked=4;
+}
+message LikeCommentResp{
+  int64 like_count=1;
+
+}
+
+message UpdateAvatarReq{
+  uint64 uid=1;
+  string avatar=2;
+}
+message UpdateAvatarResp{
+  int64 rows_affected=1;
+}
