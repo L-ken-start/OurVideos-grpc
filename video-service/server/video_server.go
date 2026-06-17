@@ -93,6 +93,7 @@ func (s *VideoServer) ListVideo(ctx context.Context, req *video.ListVideoReq) (*
 		uint(req.UserId),
 		int(req.Offset),
 		int(req.Limit),
+		req.Tag,
 	)
 	if err != nil {
 		return nil, toGRPCError(err)

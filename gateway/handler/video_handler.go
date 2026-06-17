@@ -90,6 +90,7 @@ func (h *VideoHandler) ListSeriesEpisodes(c *gin.Context) {
 
 func (h *VideoHandler) ListVideo(c *gin.Context) {
 	category := c.DefaultQuery("category", "")
+	tag := c.DefaultQuery("tag", "")
 	sortBy := parseSortBy(c.DefaultQuery("sort", "latest"))
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
@@ -99,6 +100,7 @@ func (h *VideoHandler) ListVideo(c *gin.Context) {
 		SortBy:   sortBy,
 		Offset:   int32(offset),
 		Limit:    int64(limit),
+		Tag:      tag,
 	})
 	if err != nil {
 		HandleGRPCError(c, err)

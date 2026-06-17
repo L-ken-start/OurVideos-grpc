@@ -59,31 +59,37 @@ func (r *VideoRepository) FindByID(id uint) (*model.Video, error) {
 }
 
 // 返回值：视频切片 + 总数（用于分页组件显示"共 42 条，第 1/3 页"）
-func (r *VideoRepository) List(category string, sortBy string, userID uint, offset, limit int) ([]model.Video, int64, error) {
+func (r *VideoRepository) List(category string, sortBy string, userID uint, offset, limit int, tag string) ([]model.Video, int64, error) {
 	var videos []model.Video
 	var total int64
 
-	query := r.DB.Model(&model.Video{})
+	query := r.DB.Table("videos").Select("*").Joins("LEFT JOIN series ON series.id = videos.series_id")
 
 	if category != "" {
 
-		query = query.Where("category = ?", category)
+		query = query.Where("videos.category = ?", category)
+	}
+	if tag != "" {
+		tag = "%" + tag + "%"
+		query = query.Where("videos.tags like ? or series.tags like ?", tag, tag)
 	}
 	if userID != 0 {
-		query = query.Where("user_id=?", userID)
+		query = query.Where("series.user_id=?", userID)
 	}
+	//过滤
+	query = query.Where("videos.series_id = 0 or videos.id=videos.series_id")
 
 	query.Count(&total)
 
 	switch sortBy {
 	case "popular":
-		query = query.Order("play_count desc")
+		query = query.Order("videos.play_count desc")
 	case "rating":
-		query = query.Order("rating desc")
+		query = query.Order("COALESCE(series.rating, videos.rating) DESC")
 	default:
-		query = query.Order("created_at desc")
+		query = query.Order("videos.created_at DESC")
 	}
-	err := query.Where("id=series_id or series_id=0").Offset(offset).Limit(limit).Find(&videos).Error
+	err := query.Offset(offset).Limit(limit).Find(&videos).Error
 	return videos, total, err
 
 }

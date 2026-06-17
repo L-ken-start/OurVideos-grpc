@@ -111,6 +111,7 @@ message ListVideoReq{
   int32 offset=3;
   int64 limit=4;
   uint64 user_id=5;
+  string tag=6;
 
 }
 

@@ -141,7 +141,7 @@ func (s *VideoService) GetVideo(id uint) (*model.Video, error) {
 	return video, nil
 }
 
-func (s *VideoService) ListVideos(category string, sortBy string, userID uint, offset, limit int) ([]model.Video, int64, error) {
+func (s *VideoService) ListVideos(category string, sortBy string, userID uint, offset, limit int, tag string) ([]model.Video, int64, error) {
 	if offset < 0 {
 		offset = 0
 	}
@@ -152,7 +152,7 @@ func (s *VideoService) ListVideos(category string, sortBy string, userID uint, o
 		sortBy = "latest"
 	}
 	category = SwitchCategory(category)
-	return s.Repo.List(category, sortBy, userID, offset, limit)
+	return s.Repo.List(category, sortBy, userID, offset, limit, tag)
 }
 
 func (s *VideoService) ListSeriesEpisodes(seriesID uint) ([]model.Video, error) {

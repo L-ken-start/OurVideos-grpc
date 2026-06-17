@@ -847,6 +847,7 @@ type ListVideoReq struct {
 	Offset        int32  `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"`
 	Limit         int64  `protobuf:"varint,4,opt,name=limit,proto3" json:"limit,omitempty"`
 	UserId        uint64 `protobuf:"varint,5,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Tag           string `protobuf:"bytes,6,opt,name=tag,proto3" json:"tag,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -914,6 +915,13 @@ func (x *ListVideoReq) GetUserId() uint64 {
 		return x.UserId
 	}
 	return 0
+}
+
+func (x *ListVideoReq) GetTag() string {
+	if x != nil {
+		return x.Tag
+	}
+	return ""
 }
 
 type ListVideoResp struct {
@@ -1151,13 +1159,14 @@ const file_video_video_proto_rawDesc = "" +
 	"\x03uid\x18\x02 \x01(\x04R\x03uid\"Q\n" +
 	"\fGetVideoResp\x12&\n" +
 	"\x05video\x18\x01 \x01(\v2\x10.video.VideoInfoR\x05video\x12\x19\n" +
-	"\bis_liked\x18\x02 \x01(\bR\aisLiked\"\x99\x01\n" +
+	"\bis_liked\x18\x02 \x01(\bR\aisLiked\"\xab\x01\n" +
 	"\fListVideoReq\x12\x1a\n" +
 	"\bcategory\x18\x01 \x01(\tR\bcategory\x12&\n" +
 	"\asort_by\x18\x02 \x01(\x0e2\r.video.SortByR\x06sortBy\x12\x16\n" +
 	"\x06offset\x18\x03 \x01(\x05R\x06offset\x12\x14\n" +
 	"\x05limit\x18\x04 \x01(\x03R\x05limit\x12\x17\n" +
-	"\auser_id\x18\x05 \x01(\x04R\x06userId\"O\n" +
+	"\auser_id\x18\x05 \x01(\x04R\x06userId\x12\x10\n" +
+	"\x03tag\x18\x06 \x01(\tR\x03tag\"O\n" +
 	"\rListVideoResp\x12(\n" +
 	"\x06videos\x18\x01 \x03(\v2\x10.video.VideoInfoR\x06videos\x12\x14\n" +
 	"\x05total\x18\x02 \x01(\x05R\x05total\"U\n" +

@@ -1,6 +1,6 @@
 @echo off
 git add .
-git commit -m "feat: 视频投稿、我的视频、分集、H.264播放"
+git commit -m "feat: 做出详细分类"
 git push
 
 echo "github push successfully!"
