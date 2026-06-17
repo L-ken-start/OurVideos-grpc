@@ -19,11 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	VideoService_CreateVideo_FullMethodName = "/video.VideoService/CreateVideo"
-	VideoService_GetVideo_FullMethodName    = "/video.VideoService/GetVideo"
-	VideoService_ListVideo_FullMethodName   = "/video.VideoService/ListVideo"
-	VideoService_SearchVideo_FullMethodName = "/video.VideoService/SearchVideo"
-	VideoService_LikeVideo_FullMethodName   = "/video.VideoService/LikeVideo"
+	VideoService_CreateVideo_FullMethodName        = "/video.VideoService/CreateVideo"
+	VideoService_GetVideo_FullMethodName           = "/video.VideoService/GetVideo"
+	VideoService_ListVideo_FullMethodName          = "/video.VideoService/ListVideo"
+	VideoService_SearchVideo_FullMethodName        = "/video.VideoService/SearchVideo"
+	VideoService_LikeVideo_FullMethodName          = "/video.VideoService/LikeVideo"
+	VideoService_ListSeriesEpisodes_FullMethodName = "/video.VideoService/ListSeriesEpisodes"
+	VideoService_UploadVideo_FullMethodName        = "/video.VideoService/UploadVideo"
 )
 
 // VideoServiceClient is the client API for VideoService service.
@@ -35,6 +37,8 @@ type VideoServiceClient interface {
 	ListVideo(ctx context.Context, in *ListVideoReq, opts ...grpc.CallOption) (*ListVideoResp, error)
 	SearchVideo(ctx context.Context, in *SearchVideosReq, opts ...grpc.CallOption) (*SearchVideosResp, error)
 	LikeVideo(ctx context.Context, in *LikeVideoReq, opts ...grpc.CallOption) (*LikeVideoResp, error)
+	ListSeriesEpisodes(ctx context.Context, in *SeriesEpisodesReq, opts ...grpc.CallOption) (*SeriesEpisodesResp, error)
+	UploadVideo(ctx context.Context, in *UploadVideoReq, opts ...grpc.CallOption) (*UploadVideoResp, error)
 }
 
 type videoServiceClient struct {
@@ -95,6 +99,26 @@ func (c *videoServiceClient) LikeVideo(ctx context.Context, in *LikeVideoReq, op
 	return out, nil
 }
 
+func (c *videoServiceClient) ListSeriesEpisodes(ctx context.Context, in *SeriesEpisodesReq, opts ...grpc.CallOption) (*SeriesEpisodesResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SeriesEpisodesResp)
+	err := c.cc.Invoke(ctx, VideoService_ListSeriesEpisodes_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *videoServiceClient) UploadVideo(ctx context.Context, in *UploadVideoReq, opts ...grpc.CallOption) (*UploadVideoResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UploadVideoResp)
+	err := c.cc.Invoke(ctx, VideoService_UploadVideo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // VideoServiceServer is the server API for VideoService service.
 // All implementations must embed UnimplementedVideoServiceServer
 // for forward compatibility.
@@ -104,6 +128,8 @@ type VideoServiceServer interface {
 	ListVideo(context.Context, *ListVideoReq) (*ListVideoResp, error)
 	SearchVideo(context.Context, *SearchVideosReq) (*SearchVideosResp, error)
 	LikeVideo(context.Context, *LikeVideoReq) (*LikeVideoResp, error)
+	ListSeriesEpisodes(context.Context, *SeriesEpisodesReq) (*SeriesEpisodesResp, error)
+	UploadVideo(context.Context, *UploadVideoReq) (*UploadVideoResp, error)
 	mustEmbedUnimplementedVideoServiceServer()
 }
 
@@ -128,6 +154,12 @@ func (UnimplementedVideoServiceServer) SearchVideo(context.Context, *SearchVideo
 }
 func (UnimplementedVideoServiceServer) LikeVideo(context.Context, *LikeVideoReq) (*LikeVideoResp, error) {
 	return nil, status.Error(codes.Unimplemented, "method LikeVideo not implemented")
+}
+func (UnimplementedVideoServiceServer) ListSeriesEpisodes(context.Context, *SeriesEpisodesReq) (*SeriesEpisodesResp, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListSeriesEpisodes not implemented")
+}
+func (UnimplementedVideoServiceServer) UploadVideo(context.Context, *UploadVideoReq) (*UploadVideoResp, error) {
+	return nil, status.Error(codes.Unimplemented, "method UploadVideo not implemented")
 }
 func (UnimplementedVideoServiceServer) mustEmbedUnimplementedVideoServiceServer() {}
 func (UnimplementedVideoServiceServer) testEmbeddedByValue()                      {}
@@ -240,6 +272,42 @@ func _VideoService_LikeVideo_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _VideoService_ListSeriesEpisodes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SeriesEpisodesReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VideoServiceServer).ListSeriesEpisodes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: VideoService_ListSeriesEpisodes_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VideoServiceServer).ListSeriesEpisodes(ctx, req.(*SeriesEpisodesReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _VideoService_UploadVideo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UploadVideoReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VideoServiceServer).UploadVideo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: VideoService_UploadVideo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VideoServiceServer).UploadVideo(ctx, req.(*UploadVideoReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // VideoService_ServiceDesc is the grpc.ServiceDesc for VideoService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -266,6 +334,14 @@ var VideoService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "LikeVideo",
 			Handler:    _VideoService_LikeVideo_Handler,
+		},
+		{
+			MethodName: "ListSeriesEpisodes",
+			Handler:    _VideoService_ListSeriesEpisodes_Handler,
+		},
+		{
+			MethodName: "UploadVideo",
+			Handler:    _VideoService_UploadVideo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

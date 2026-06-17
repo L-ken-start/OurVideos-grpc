@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-
 	"ourvideos/proto/video"
 	servicemodel "ourvideos/video-service/model"
 	"ourvideos/video-service/service"
@@ -30,7 +29,22 @@ func modelToProto(v *servicemodel.Video) *video.VideoInfo {
 		LikeCount:   v.LikeCount,
 		UserId:      uint64(v.UserID),
 		CreatedAt:   v.CreatedAt.Format("2006-01-02 15:04:05"),
+		SeriesId:    uint64(v.SeriesID),
+		Episode:     int32(v.Episode),
 	}
+}
+
+func (s *VideoServer) UploadVideo(ctx context.Context, req *video.UploadVideoReq) (*video.UploadVideoResp, error) {
+	v, err := s.Svc.UploadVideo(service.CreateVideoParams{
+		Title:     req.Title,
+		Category:  req.Category,
+		PosterURL: req.PosterUrl,
+		VideoURL:  req.VideoUrl,
+		Year:      int(req.Year),
+		Episode:   uint(req.Episode),
+		SeriesID:  uint(req.SeriesId),
+	})
+	return &video.UploadVideoResp{Video: modelToProto(v)}, toGRPCError(err)
 }
 
 func (s *VideoServer) CreateVideo(ctx context.Context, req *video.CreateVideoReq) (*video.CreateVideoResp, error) {
@@ -43,6 +57,7 @@ func (s *VideoServer) CreateVideo(ctx context.Context, req *video.CreateVideoReq
 		Duration:    int(req.Duration),
 		Tags:        req.Tags,
 		Year:        int(req.Year),
+		UserID:      uint(req.UserId),
 	})
 	if err != nil {
 		return nil, toGRPCError(err)
@@ -57,6 +72,18 @@ func (s *VideoServer) GetVideo(ctx context.Context, req *video.GetVideoReq) (*vi
 		return nil, toGRPCError(err)
 	}
 	return &video.GetVideoResp{Video: modelToProto(v), IsLiked: liked}, nil
+}
+
+func (s *VideoServer) ListSeriesEpisodes(ctx context.Context, req *video.SeriesEpisodesReq) (*video.SeriesEpisodesResp, error) {
+	episodes, err := s.Svc.ListSeriesEpisodes(uint(req.SeriesId))
+	if err != nil {
+		return nil, toGRPCError(err)
+	}
+	pb := make([]*video.VideoInfo, len(episodes))
+	for i, ep := range episodes {
+		pb[i] = modelToProto(&ep)
+	}
+	return &video.SeriesEpisodesResp{Episodes: pb}, nil
 }
 
 func (s *VideoServer) ListVideo(ctx context.Context, req *video.ListVideoReq) (*video.ListVideoResp, error) {

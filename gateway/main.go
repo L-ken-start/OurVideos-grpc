@@ -43,12 +43,15 @@ func main() {
 	//视频显示路由
 	r.GET("/videos", videoH.ListVideo)
 	r.GET("/videos/search", videoH.SearchVideos)
+	//上传视频
 
 	//获取评论列表（公开）
 	r.GET("/videos/:id/comments", commentH.ListComments)
+	r.GET("/videos/series/:series_id", videoH.ListSeriesEpisodes)
 
 	auth := r.Group("/", middleware.JWTAuth())
 	{
+		auth.POST("/upload_video", videoH.UploadVideo)
 
 		auth.GET("/user/:id", h.GetUser)
 		auth.PUT("/user/update", h.UserUpdate)
@@ -56,7 +59,7 @@ func main() {
 		auth.PUT("/user/update/password", h.PswUpdate)
 		// 发评论需登录
 		auth.POST("/videos/:id/comments", commentH.AddComments)
-		auth.POST("/videos", videoH.CreateVideo)
+		auth.POST("/upload_videos", videoH.CreateVideo)
 		auth.GET("/videos/:id", videoH.GetVideo)
 		auth.POST("/videos/:id/like", videoH.LikeVideo)
 		//评论业务

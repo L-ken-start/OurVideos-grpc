@@ -11,6 +11,14 @@ service VideoService{
   rpc ListVideo(ListVideoReq)returns(ListVideoResp);
   rpc SearchVideo(SearchVideosReq)returns(SearchVideosResp);
   rpc LikeVideo(LikeVideoReq)returns(LikeVideoResp);
+  rpc ListSeriesEpisodes(SeriesEpisodesReq) returns (SeriesEpisodesResp);
+  rpc UploadVideo(UploadVideoReq)returns (UploadVideoResp);
+}
+message SeriesEpisodesReq{
+  uint64 series_id=1;
+}
+message SeriesEpisodesResp{
+  repeated VideoInfo episodes=1;
 }
 
 message VideoInfo {
@@ -28,6 +36,8 @@ message VideoInfo {
   int64 like_count = 12;   // 点赞数
   uint64 user_id = 13;     // 上传者 ID
   string created_at = 14;  // 上传时间
+  uint64 series_id = 15;
+  int32 episode = 16;
 }
 
 
@@ -60,11 +70,27 @@ message CreateVideoReq {
   int32 duration = 6;
   string tags = 7;
   int32 year = 8;
+  int32 user_id=9;
 }
 
 message CreateVideoResp{
   VideoInfo video=1;
 }
+
+message UploadVideoReq {
+  string title = 1;
+  string category = 3;
+  string poster_url = 4;
+  string video_url = 5;
+  int32 year = 8;
+  int32 series_id=9;
+  int32 episode=10;
+}
+
+message UploadVideoResp{
+  VideoInfo video=1;
+}
+
 
 message GetVideoReq {
   uint64 id = 1;

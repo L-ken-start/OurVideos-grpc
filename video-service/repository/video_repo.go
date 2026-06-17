@@ -21,7 +21,32 @@ func NewVideoRepository(db *gorm.DB) *VideoRepository {
 
 // 创建视频记录
 func (r *VideoRepository) Create(video *model.Video) error {
-	return r.DB.Create(video).Error
+	err := r.DB.Create(video).Error
+	if err != nil {
+		return err
+	}
+	if video.Category != "电影" && video.SeriesID == 0 {
+		err = r.DB.Model(video).Update("series_id", gorm.Expr("id")).Error
+
+	}
+	return err
+}
+
+func (r *VideoRepository) UploadVideo(video *model.Video) error {
+	err := r.DB.Create(video).Error
+	if err != nil {
+		return err
+	}
+	r.DB.Model(video).Update("series_id", video.SeriesID)
+	return err
+}
+
+func (r *VideoRepository) CreateSeries(series *model.Series) error {
+	err := r.DB.Create(series).Error
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (r *VideoRepository) FindByID(id uint) (*model.Video, error) {
@@ -58,9 +83,24 @@ func (r *VideoRepository) List(category string, sortBy string, userID uint, offs
 	default:
 		query = query.Order("created_at desc")
 	}
-	err := query.Offset(offset).Limit(limit).Find(&videos).Error
+	err := query.Where("id=series_id or series_id=0").Offset(offset).Limit(limit).Find(&videos).Error
 	return videos, total, err
 
+}
+
+func (r *VideoRepository) FindBySeries(sid uint) ([]model.Video, error) {
+	var videos []model.Video
+	err := r.DB.Where("series_id=?", sid).Order("episode asc").Find(&videos).Error
+	return videos, err
+}
+
+func (r *VideoRepository) FindSeriesByID(id uint) (*model.Series, error) {
+	var s model.Series
+	err := r.DB.First(&s, id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &s, nil
 }
 
 // ============================================================

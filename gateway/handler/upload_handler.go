@@ -26,6 +26,7 @@ var uploadRules = map[string]uploadRule{
 	"avatar": {2 << 20, []string{".jpg", ".jpeg", ".png", ".webp"}, "static/avatars"},
 	"poster": {5 << 20, []string{".jpg", ".jpeg", ".png", ".webp"}, "static/posters"},
 	"cover":  {3 << 20, []string{".jpg", ".jpeg", ".png", ".webp"}, "static/covers"},
+	"video":  {500 << 20, []string{".mp4"}, "static/videos"}, // ← 加这行
 }
 
 // UploadHandler 统一上传
@@ -75,15 +76,19 @@ func (h *UploadHandler) Upload(c *gin.Context) {
 		return
 	}
 
-	// 校验是否为真实图片（防改后缀）
+	// 读取文件内容
 	buf, err := io.ReadAll(io.LimitReader(file, rule.MaxSize))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "读取文件失败"})
 		return
 	}
-	if _, _, err := image.DecodeConfig(strings.NewReader(string(buf))); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "不是有效的图片文件"})
-		return
+
+	// 图片类型校验真实性，视频类型跳过
+	if resourceType != "video" {
+		if _, _, err := image.DecodeConfig(strings.NewReader(string(buf))); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "不是有效的图片文件"})
+			return
+		}
 	}
 
 	// 确保目录存在

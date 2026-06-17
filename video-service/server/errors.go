@@ -17,6 +17,8 @@ func toGRPCError(err error) error {
 		return status.Error(codes.Internal, err.Error())
 	case errors.Is(err, service.ErrLike):
 		return status.Error(codes.Internal, err.Error())
+	case errors.Is(err, nil):
+		return nil
 
 	}
 	return err
