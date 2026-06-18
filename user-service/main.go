@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net"
+	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 
@@ -16,6 +20,21 @@ import (
 	"ourvideos/user-service/server"
 	"ourvideos/user-service/service"
 )
+
+func grpcInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("[PANIC] method=%s panic=%v", info.FullMethod, r)
+			err = status.Errorf(codes.Internal, "内部错误")
+		}
+	}()
+	start := time.Now()
+	resp, err = handler(ctx, req)
+	if err != nil {
+		log.Printf("[GRPC-ERROR] method=%s err=%v duration=%v", info.FullMethod, err, time.Since(start))
+	}
+	return resp, err
+}
 
 func main() {
 	//链接数据库
@@ -47,7 +66,7 @@ func main() {
 	repo := repository.NewUserRepository(db)
 	svc := service.NewUserService(repo)
 
-	s := grpc.NewServer()
+	s := grpc.NewServer(grpc.UnaryInterceptor(grpcInterceptor))
 	user.RegisterUserServiceServer(s, &server.UserServer{
 		Svc:           svc,
 		CommentClient: commentClient,

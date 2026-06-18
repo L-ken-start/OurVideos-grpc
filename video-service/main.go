@@ -1,17 +1,38 @@
 package main
 
 import (
-	"google.golang.org/grpc"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
+	"context"
 	"log"
 	"net"
+	"time"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+
 	"ourvideos/proto/video"
 	"ourvideos/video-service/model"
 	"ourvideos/video-service/repository"
 	"ourvideos/video-service/server"
 	"ourvideos/video-service/service"
 )
+
+func grpcInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("[PANIC] method=%s panic=%v", info.FullMethod, r)
+			err = status.Errorf(codes.Internal, "内部错误")
+		}
+	}()
+	start := time.Now()
+	resp, err = handler(ctx, req)
+	if err != nil {
+		log.Printf("[GRPC-ERROR] method=%s err=%v duration=%v", info.FullMethod, err, time.Since(start))
+	}
+	return resp, err
+}
 
 func main() {
 	dsn := "root:123456@tcp(127.0.0.1:3306)/video_db?charset=utf8&parseTime=True&loc=Local"
@@ -41,7 +62,7 @@ func main() {
 		log.Fatalf("监听失败: %v", err)
 	}
 
-	s := grpc.NewServer()
+	s := grpc.NewServer(grpc.UnaryInterceptor(grpcInterceptor))
 	video.RegisterVideoServiceServer(s, srv)
 
 	log.Println("Video service listening on :50052")

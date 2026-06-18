@@ -31,6 +31,7 @@ func main() {
 
 	//创建gin引擎
 	r := gin.Default()
+	r.Use(middleware.RequestLogger())
 	r.Static("/static", "./static")
 	h := &handler.UserHandler{Client: userClient}
 	videoH := &handler.VideoHandler{Client: videoClient}

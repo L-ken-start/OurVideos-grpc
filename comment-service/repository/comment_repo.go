@@ -86,7 +86,7 @@ func (r *CommentRepository) UpdateCommentlike(id uint, like int) (int64, error) 
 		Select("like_count").Scan(&newCount).Error
 	return newCount, err
 
-} //视频点赞业务写错地方了
+}
 
 func (r *CommentRepository) ToggleCommentlike(uid uint, cid uint) (int64, error) {
 	var like_count int64

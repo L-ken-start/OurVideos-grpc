@@ -5,6 +5,7 @@ go 1.25.6
 require (
 	github.com/gin-gonic/gin v1.12.0
 	github.com/golang-jwt/jwt/v5 v5.2.1
+	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3
 	golang.org/x/crypto v0.52.0
 	google.golang.org/grpc v1.81.1
 	google.golang.org/protobuf v1.36.11
