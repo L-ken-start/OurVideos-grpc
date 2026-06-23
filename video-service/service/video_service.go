@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	"gorm.io/gorm"
@@ -133,12 +134,36 @@ func (s *VideoService) GetVideo(id uint) (*model.Video, error) {
 			video.Tags = series.Tags
 			video.Year = series.Year
 			video.Rating = series.Rating
+			//video.PlayCount = playCount
 		}
 	}
-	_ = s.Repo.IncrementPlayCount(id)
-	video.PlayCount++
+	count, err := s.Repo.IncrPlayCount(id)
+	if err != nil {
+		log.Printf("[Redis] IncrPlayCount id=%d err=%v", id, err)
+	}
+
+	//fmt.Println("paly_count", video.PlayCount, "||", count)
+	video.PlayCount += count
+	if err := s.Repo.AddHeat(id, video.SeriesID, 1); err != nil {
+		log.Printf("[Redis] AddHeat failed: video=%d err=%v", id, err)
+		return nil, err
+	}
 
 	return video, nil
+}
+
+func SwitchSortBy(sort string) string {
+	switch sort {
+	case "SORT_BY_POPULAR":
+		return "popular"
+	case "SORT_BY_LATEST":
+		return "latest"
+	case "SORT_BY_RATING":
+		return "rating"
+	default:
+		return "latest"
+
+	}
 }
 
 func (s *VideoService) ListVideos(category string, sortBy string, userID uint, offset, limit int, tag string) ([]model.Video, int64, error) {
@@ -148,10 +173,22 @@ func (s *VideoService) ListVideos(category string, sortBy string, userID uint, o
 	if limit <= 0 || limit > 50 {
 		limit = 20
 	}
+	//fmt.Println("转换前:", sortBy)
+	//sortBy = SwitchSortBy(sortBy)
+	//fmt.Println("转换后:", sortBy)
 	if !allowedSortBy[sortBy] {
 		sortBy = "latest"
 	}
 	category = SwitchCategory(category)
+	if sortBy == "popular" {
+		//fmt.Println("1")
+		videos, err := s.Repo.GetHotVideos(limit, category)
+		fmt.Println(len(videos))
+		if err == nil && len(videos) > 0 {
+			return videos, int64(len(videos)), nil
+
+		}
+	}
 	return s.Repo.List(category, sortBy, userID, offset, limit, tag)
 }
 
@@ -192,9 +229,18 @@ func SwitchCategory(category string) string {
 
 func (s *VideoService) LikeVideo(vid uint, uid uint) (int64, bool, error) {
 	like_count, is_liked, err := s.Repo.ToggleVideolike(vid, uid)
+	video, _ := s.Repo.FindByID(vid)
 	if err != nil {
 		return 0, is_liked, ErrLike
 	}
+	if is_liked {
+		if err := s.Repo.AddHeat(vid, video.SeriesID, 2); err != nil {
+			log.Printf("[Redis] AddHeat like failed: video=%d err=%v", vid, err)
+		}
+	} else {
+		s.Repo.AddHeat(vid, video.SeriesID, -2) // 取消 -2
+	}
+
 	return like_count, is_liked, nil
 }
 

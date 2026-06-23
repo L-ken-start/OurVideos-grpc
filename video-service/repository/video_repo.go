@@ -1,10 +1,14 @@
 package repository
 
 import (
+	"context"
 	"errors"
+	"fmt"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 	"ourvideos/video-service/model"
 	_ "ourvideos/video-service/model"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -12,11 +16,96 @@ import (
 // VideoRepository 视频数据访问层
 // 职责：纯数据库 CRUD，不包含任何业务逻辑
 type VideoRepository struct {
-	DB *gorm.DB
+	DB  *gorm.DB
+	RDB *redis.Client
 }
 
-func NewVideoRepository(db *gorm.DB) *VideoRepository {
-	return &VideoRepository{DB: db}
+func NewVideoRepository(db *gorm.DB, rdb *redis.Client) *VideoRepository {
+	return &VideoRepository{DB: db, RDB: rdb}
+
+}
+
+// IncrPlayCount 播放量 +1（只写 Redis）
+func (r *VideoRepository) IncrPlayCount(videoID uint) (int64, error) {
+	//本质上是将关系型数据库中“表名 + 字段名 + 主键ID”的概念
+	return r.RDB.Incr(context.Background(), fmt.Sprintf("video:play:%d", videoID)).Result()
+}
+
+func hotkey() string {
+	return "video:hot:" + time.Now().Format("2006-01-02")
+}
+
+// AddHeat —— 播放+1分，点赞+2分，取消点赞-2分
+
+func (r *VideoRepository) AddHeat(videoID uint, seriseID uint, delta int64) error {
+	memberID := videoID
+	if seriseID > 0 {
+		memberID = seriseID
+	}
+	member := strconv.FormatUint(uint64(memberID), 10)
+
+	key := "video:hot:" + time.Now().Format("2006-01-02")
+
+	err := r.RDB.ZIncrBy(context.Background(), key, float64(delta), member).Err()
+	if err != nil {
+		return err
+	}
+
+	// 48 小时后自动清理旧 key
+	r.RDB.Expire(context.Background(), key, 48*time.Hour)
+	return nil
+}
+
+// GetHotVideoIDs —— 拿热度 Top N 的视频 ID
+func (r *VideoRepository) GetHotVideos(limit int, category string) ([]model.Video, error) {
+	key := "video:hot:" + time.Now().Format("2006-01-02")
+	strs, err := r.RDB.ZRangeArgs(context.Background(), redis.ZRangeArgs{
+		Key:   key,
+		Start: 0,
+		Stop:  int64(limit - 1),
+		Rev:   true,
+	}).Result()
+	if err != nil {
+		return nil, err
+	}
+	var ids []uint
+	for _, s := range strs {
+		var id uint
+		fmt.Sscanf(s, "%d", &id)
+		ids = append(ids, id)
+	}
+
+	var videos []model.Video
+	for _, id := range ids {
+
+		var v model.Video
+		query := r.DB.Where("id= ? or (series_id=? and episode=1)", id, id)
+		if category != "" {
+			query = query.Where("category = ?", category)
+		}
+		err := query.Order("series_id = 0 DESC").First(&v).Error
+		if err == nil {
+			videos = append(videos, v) // 查到了才加
+		}
+	}
+	return videos, nil
+
+}
+
+// redis控制批量添加播放量
+func (r *VideoRepository) SyncPlayCounts() error {
+	keys, _ := r.RDB.Keys(context.Background(), "video:play:*").Result()
+	for _, key := range keys {
+		id := strings.TrimPrefix(key, "video:play:")
+		count, _ := r.RDB.Get(context.Background(), key).Int64()
+		r.RDB.Del(context.Background(), key)
+		result := r.DB.Exec("UPDATE videos SET play_count = play_count + ? WHERE id = ?", count, id)
+		if result.Error != nil {
+			fmt.Printf("更新播放量失败 id=%s count=%d err=%v\n", id, count, result.Error)
+		}
+	}
+	return nil
+
 }
 
 // 创建视频记录
@@ -82,8 +171,6 @@ func (r *VideoRepository) List(category string, sortBy string, userID uint, offs
 	query.Count(&total)
 
 	switch sortBy {
-	case "popular":
-		query = query.Order("videos.play_count desc")
 	case "rating":
 		query = query.Order("COALESCE(series.rating, videos.rating) DESC")
 	default:
@@ -102,7 +189,11 @@ func (r *VideoRepository) FindBySeries(sid uint) ([]model.Video, error) {
 
 func (r *VideoRepository) FindSeriesByID(id uint) (*model.Series, error) {
 	var s model.Series
+	//var v model.Video
+	//var playCount int64
 	err := r.DB.First(&s, id).Error
+	//r.DB.Model(v).Where("id=?", id).Select("play_count").Scan(&playCount)
+	//fmt.Println("播放量为:", playCount)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +244,7 @@ func (r *VideoRepository) UpdateVideoLike(videoId uint, like int64) (int64, erro
 		return 0, err
 	}
 	var newCount int64
-	err = r.DB.Model(&model.Like{}).
+	err = r.DB.Model(&model.Video{}).
 		Where("id=?", videoId).Select("like_count").Scan(&newCount).Error
 	if err != nil {
 		return 0, err

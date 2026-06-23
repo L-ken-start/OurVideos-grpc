@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/redis/go-redis/v9"
 	"log"
 	"net"
 	"time"
@@ -47,11 +48,19 @@ func main() {
 	if err := db.AutoMigrate(&model.Like{}); err != nil {
 		panic("auto migrate failed" + err.Error())
 	}
+	//redis连接
+	rdb := redis.NewClient(&redis.Options{
+		Addr: "localhost:6379",
+	})
+	if err := rdb.Ping(context.Background()).Err(); err != nil {
+		panic("Redis connect failed")
+	}
+
 	// -------------------- 依赖注入 --------------------
 	// 顺序：db → repo → service → server
 	// 上一层的输出是下一层的输入，main.go 是唯一知道全貌的地方。
 	// 这个模式叫 "Composition Root"（组合根）。
-	repo := repository.NewVideoRepository(db)
+	repo := repository.NewVideoRepository(db, rdb)
 	svc := service.NewVideoService(repo)
 	srv := &server.VideoServer{Svc: svc}
 
@@ -66,6 +75,29 @@ func main() {
 	video.RegisterVideoServiceServer(s, srv)
 
 	log.Println("Video service listening on :50052")
+	//redis定时同步
+	go func() {
+		ticker := time.NewTicker(30 * time.Second)
+		for range ticker.C {
+			if err := repo.SyncPlayCounts(); err != nil {
+				log.Printf("[SYNC] 播放量同步失败: %v", err)
+			}
+
+		}
+	}()
+	//redis热度榜数据凌晨12点过期
+	//go func() {
+	//	for {
+	//		now := time.Now()
+	//		//计算到0点的剩余时间
+	//		midnight := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, now.Location())
+	//		wait := midnight.Sub(now)
+	//		time.Sleep(wait)
+	//		rdb.Del(context.Background(), "video:hot")
+	//		log.Println("[HOT] 热度榜已重置")
+	//
+	//	}
+	//}()
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("服务启动失败: %v", err)
 	}

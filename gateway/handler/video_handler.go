@@ -92,6 +92,7 @@ func (h *VideoHandler) ListVideo(c *gin.Context) {
 	category := c.DefaultQuery("category", "")
 	tag := c.DefaultQuery("tag", "")
 	sortBy := parseSortBy(c.DefaultQuery("sort", "latest"))
+	fmt.Println(sortBy)
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
 
