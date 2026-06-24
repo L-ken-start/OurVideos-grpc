@@ -66,7 +66,7 @@ func (h *VideoHandler) GetVideo(c *gin.Context) {
 		return
 	}
 	currentUserID := userIDVal.(uint)
-	fmt.Println(currentUserID)
+	//fmt.Println(currentUserID)
 	resp, err := h.Client.GetVideo(c.Request.Context(), &video.GetVideoReq{Id: id, Uid: uint64(currentUserID)})
 	if err != nil {
 		HandleGRPCError(c, err) //get里面没放token

@@ -148,7 +148,7 @@ func (r *VideoRepository) FindByID(id uint) (*model.Video, error) {
 }
 
 // 返回值：视频切片 + 总数（用于分页组件显示"共 42 条，第 1/3 页"）
-func (r *VideoRepository) List(category string, sortBy string, userID uint, offset, limit int, tag string) ([]model.Video, int64, error) {
+func (r *VideoRepository) List(category string, sortBy string, userID uint, offset, limit int, tag []string) ([]model.Video, int64, error) {
 	var videos []model.Video
 	var total int64
 
@@ -158,9 +158,18 @@ func (r *VideoRepository) List(category string, sortBy string, userID uint, offs
 
 		query = query.Where("videos.category = ?", category)
 	}
-	if tag != "" {
-		tag = "%" + tag + "%"
-		query = query.Where("videos.tags like ? or series.tags like ?", tag, tag)
+	if len(tag) > 0 {
+		tag_search := "(videos.tags like ? or series.tags like ?)"
+		conditions := make([]string, len(tag))
+		args := make([]interface{}, len(tag)*2)
+		for i, t := range tag {
+			new_tag := "%" + strings.TrimSpace(t) + "%"
+			conditions[i] = tag_search
+			args[i*2] = new_tag
+			args[i*2+1] = new_tag
+		}
+
+		query = query.Where(strings.Join(conditions, " or "), args...)
 	}
 	if userID != 0 {
 		query = query.Where("series.user_id=?", userID)

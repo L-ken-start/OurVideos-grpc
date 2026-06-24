@@ -65,7 +65,7 @@ func (s *VideoService) CreateVideo(params CreateVideoParams) (*model.Video, erro
 		if err := s.Repo.Create(video); err != nil {
 			return nil, ErrInternal
 		}
-		fmt.Println("series_id:", video.SeriesID)
+
 		series := &model.Series{
 			ID:          video.SeriesID,
 			UserID:      params.UserID,
@@ -111,7 +111,7 @@ func (s *VideoService) UploadVideo(params CreateVideoParams) (*model.Video, erro
 		Year:      params.Year,
 		Episode:   params.Episode,
 	}
-	fmt.Println(params.SeriesID)
+
 	if err := s.Repo.UploadVideo(video); err != nil {
 		return nil, ErrInternal
 	}
@@ -167,9 +167,12 @@ func SwitchSortBy(sort string) string {
 }
 
 func (s *VideoService) ListVideos(category string, sortBy string, userID uint, offset, limit int, tag string) ([]model.Video, int64, error) {
+
 	if offset < 0 {
 		offset = 0
 	}
+	tags := strings.Split(tag, ",")
+
 	if limit <= 0 || limit > 50 {
 		limit = 20
 	}
@@ -189,7 +192,7 @@ func (s *VideoService) ListVideos(category string, sortBy string, userID uint, o
 
 		}
 	}
-	return s.Repo.List(category, sortBy, userID, offset, limit, tag)
+	return s.Repo.List(category, sortBy, userID, offset, limit, tags)
 }
 
 func (s *VideoService) ListSeriesEpisodes(seriesID uint) ([]model.Video, error) {

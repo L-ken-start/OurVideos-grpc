@@ -1,0 +1,17 @@
+syntax="proto3";
+
+package danmaku;
+
+option go_package="ourvideos/proto/danmaku";
+
+message Danmaku {
+  uint64 id = 1;
+  uint64 video_id = 2;
+  uint64 uid = 3;
+  string username = 4;
+  string content = 5;
+  float time = 6;
+  string color = 7;
+  int32 mode = 8;
+  string created_at = 9;
+}

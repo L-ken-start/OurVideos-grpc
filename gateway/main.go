@@ -2,10 +2,12 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	"log"
 	"ourvideos/gateway/client"
 	"ourvideos/gateway/handler"
 	"ourvideos/gateway/middleware"
+	"time"
 )
 
 func main() {
@@ -29,14 +31,18 @@ func main() {
 	}
 	defer commentConn.Close()
 
+	rdb := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	limiter := middleware.NewRateLimiter(rdb, 100, time.Minute)
 	//创建gin引擎
 	r := gin.Default()
 	r.Use(middleware.RequestLogger())
+	r.Use(limiter.Middleware())
 	r.Static("/static", "./static")
 	h := &handler.UserHandler{Client: userClient}
 	videoH := &handler.VideoHandler{Client: videoClient}
 	commentH := &handler.CommentHandler{Client: commentClient, UserClient: userClient}
 	uploadH := &handler.UploadHandler{}
+	danmakuHub := handler.NewDanmakuHub(rdb)
 
 	//用户注册路由
 	r.POST("/user/register", h.Register)
@@ -45,6 +51,8 @@ func main() {
 	r.GET("/videos", videoH.ListVideo)
 	r.GET("/videos/search", videoH.SearchVideos)
 	//上传视频
+	// 弹幕 WebSocket（公开，游客也能看弹幕但发弹幕需登录）
+	r.GET("/ws/danmaku/:id", danmakuHub.HandleWS)
 
 	//获取评论列表（公开）
 	r.GET("/videos/:id/comments", commentH.ListComments)
@@ -52,6 +60,7 @@ func main() {
 
 	auth := r.Group("/", middleware.JWTAuth())
 	{
+		auth.Use(limiter.Middleware())
 		auth.POST("/upload_video", videoH.UploadVideo)
 
 		auth.GET("/user/:id", h.GetUser)
