@@ -58,8 +58,8 @@ func main() {
 	oauthH := &handler.OAuthHandler{
 		UserClient: userClient, // 复用现有 gRPC 连接
 		RDB:        rdb,        // 复用现有 Redis 连接
-		ClientID:   "111",
-		Secret:     "asdasd",
+		ClientID:   "your GitHub OAuth ClientID",
+		Secret:     "your GitHub OAuth secret key",
 		Callback:   "http://localhost:8888/auth/github/callback",
 		Frontend:   "http://localhost:5173",
 	}
