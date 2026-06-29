@@ -12,6 +12,8 @@ type User struct {
 	Bio       string `gorm:"type:varchar(255);not null;default:''"`
 	Gender    int8   `gorm:"not null;default:0"`
 	Phone     string `gorm:"type:varchar(20);not null;default:''"`
+	OpenID    string `gorm:"index"`
+	Provider  string `gorm:"default:local"` // 新增：来源。"local"=密码注册
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }

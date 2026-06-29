@@ -89,6 +89,38 @@ func (s *UserService) Login(username, password string) (*model.User, string, err
 	return u, token, nil
 }
 
+func (s *UserService) OAuthLogin(provider, openID, nickname, avatar string) (*model.User, string, error) {
+	// 查数据库：这个 openID 来过没有
+	u, err := s.Repo.FindByOpenID(openID)
+	if err != nil {
+		return nil, "", status.Errorf(codes.Internal, "查询失败")
+
+	}
+
+	// 没来过 → 自动注册
+	if u == nil {
+		// 用 provider + openID 尾 8 位拼成唯一用户名，比如 "github_c4e8f2a1"
+		u = &model.User{
+			Username: provider + "_" + openID[len(openID)-8:],
+			Nickname: nickname,
+			Avatar:   avatar,
+			OpenID:   openID,
+			Provider: provider,
+		}
+		if err = s.Repo.Create(u); err != nil {
+			return nil, "", status.Errorf(codes.Internal, "create user failed")
+		}
+	}
+
+	// 签发 JWT（和密码登录用的同一个 generateJWT）
+	token, err := generateJWT(u.ID, u.Username)
+	if err != nil {
+		return nil, "", status.Errorf(codes.Internal, "generate token failed")
+	}
+	return u, token, nil
+
+}
+
 // GetUser 根据 ID 获取用户信息
 func (s *UserService) GetUser(id uint) (*model.User, error) {
 	u, err := s.Repo.FindByID(id)

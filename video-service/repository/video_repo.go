@@ -85,7 +85,16 @@ func (r *VideoRepository) GetHotVideos(limit int, category string) ([]model.Vide
 		}
 		err := query.Order("series_id = 0 DESC").First(&v).Error
 		if err == nil {
-			videos = append(videos, v) // 查到了才加
+			if v.SeriesID > 0 {
+				if s, e := r.FindSeriesByID(v.SeriesID); e == nil {
+					v.Tags = s.Tags
+					v.Description = s.Description
+					v.Rating = s.Rating
+					v.Year = s.Year
+					v.PosterURL = s.PosterURL
+				}
+			}
+			videos = append(videos, v)
 		}
 	}
 	return videos, nil

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/spf13/viper"
 	"log"
 	"net"
 	"time"
@@ -19,6 +20,17 @@ import (
 	"ourvideos/proto/comment"
 )
 
+func init() {
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(".")
+	viper.AddConfigPath("..")
+	if err := viper.ReadInConfig(); err != nil {
+		log.Printf("[Config] 未找到 config.yaml，使用环境变量: %v", err)
+	}
+	viper.AutomaticEnv() // ENV 自动覆盖 yaml
+}
+
 func grpcInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -35,7 +47,11 @@ func grpcInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServe
 }
 
 func main() {
-	dsn := "root:123456@tcp(127.0.0.1:3306)/comment_db?charset=utf8&parseTime=True&loc=Local"
+	//dsn := os.Getenv("MYSQL_COMMENT_DSN")
+	//if dsn == "" {
+	//	dsn = "root:123456@tcp(127.0.0.1:3306)/comment_db?charset=utf8&parseTime=True&loc=Local"
+	//}
+	dsn := viper.GetString("mysql.comment_dsn")
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 
 	if err != nil {
@@ -50,7 +66,7 @@ func main() {
 	svc := service.NewCommentService(repo)
 	srv := &server.CommentServer{Svc: svc}
 
-	lis, err := net.Listen("tcp", ":50053")
+	lis, err := net.Listen("tcp", viper.GetString("service.comment_port"))
 	if err != nil {
 		log.Fatalf("监听失败 %v", err)
 	}

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"github.com/redis/go-redis/v9"
+	"github.com/spf13/viper"
 	"log"
 	"net"
 	"time"
@@ -35,8 +36,25 @@ func grpcInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServe
 	return resp, err
 }
 
+func init() {
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(".")
+	viper.AddConfigPath("..")
+	if err := viper.ReadInConfig(); err != nil {
+		log.Printf("[Config] 未找到 config.yaml，使用环境变量: %v", err)
+	}
+	viper.AutomaticEnv() //env自动覆盖yaml
+
+}
+
 func main() {
-	dsn := "root:123456@tcp(127.0.0.1:3306)/video_db?charset=utf8&parseTime=True&loc=Local"
+	//dsn := os.Getenv("MYSQL_VIDEO_DSN")
+	//if dsn == "" {
+	//	dsn = "root:123456@tcp(127.0.0.1:3306)/video_db?charset=utf8&parseTime=True&loc=Local"
+	//}
+
+	dsn := viper.GetString("mysql.video_dsn")
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 
 	if err != nil {
@@ -50,7 +68,7 @@ func main() {
 	}
 	//redis连接
 	rdb := redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
+		Addr: viper.GetString("redis.addr"),
 	})
 	if err := rdb.Ping(context.Background()).Err(); err != nil {
 		panic("Redis connect failed")
@@ -66,7 +84,7 @@ func main() {
 
 	// -------------------- gRPC 服务 --------------------
 	// 端口 50052 —— user-service 占了 50051
-	lis, err := net.Listen("tcp", ":50052")
+	lis, err := net.Listen("tcp", viper.GetString("service.video_port"))
 	if err != nil {
 		log.Fatalf("监听失败: %v", err)
 	}

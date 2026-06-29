@@ -1,0 +1,20 @@
+jwt:
+  secret: "ourvideos-secret-key"
+
+mysql:
+  user_dsn: "root:123456@tcp(127.0.0.1:3306)/user_db?charset=utf8mb4&parseTime=True&loc=Local"
+  video_dsn: "root:123456@tcp(127.0.0.1:3306)/video_db?charset=utf8&parseTime=True&loc=Local"
+  comment_dsn: "root:123456@tcp(127.0.0.1:3306)/comment_db?charset=utf8mb4&parseTime=True&loc=Local"
+
+
+redis:
+  addr: "localhost:6379"
+
+service:
+    user_addr: "localhost:50051"
+    video_addr: "localhost:50052"
+    comment_addr: "localhost:50053"
+    gateway_port: ":8888"
+    user_port: ":50051"
+    video_port: ":50052"
+    comment_port: ":50053"

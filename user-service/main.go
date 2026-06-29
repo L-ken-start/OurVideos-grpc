@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/spf13/viper"
 	"log"
 	"net"
 	"time"
@@ -36,9 +37,24 @@ func grpcInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServe
 	return resp, err
 }
 
+func init() {
+	viper.SetConfigName("config") // 文件名，不带扩展名
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(".")  // 从当前目录找
+	viper.AddConfigPath("..") // 如果从子目录启动，往上找
+	if err := viper.ReadInConfig(); err != nil {
+		log.Printf("[Config] 未找到 config.yaml，使用环境变量: %v", err)
+	}
+	viper.AutomaticEnv() // ENV 自动覆盖 yaml
+}
+
 func main() {
 	//链接数据库
-	dsn := "root:123456@tcp(127.0.0.1:3306)/user_db?charset=utf8mb4&parseTime=True&loc=Local"
+	//dsn := os.Getenv("MYSQL_USER_DSN")
+	//if dsn == "" {
+	//	dsn = "root:123456@tcp(127.0.0.1:3306)/user_db?charset=utf8&parseTime=True&loc=Local"
+	//}
+	dsn := viper.GetString("mysql.user_dsn")
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 
 	if err != nil {
@@ -49,13 +65,13 @@ func main() {
 	db.AutoMigrate(&model.User{})
 
 	//启动grpc服务
-	list, err := net.Listen("tcp", ":50051")
+	list, err := net.Listen("tcp", viper.GetString("service.user_port"))
 	if err != nil {
 		log.Fatalf("监听失败:%v", err.Error())
 	}
 
 	// 连接 comment-service
-	commentConn, err := grpc.NewClient("localhost:50053", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	commentConn, err := grpc.NewClient(viper.GetString("comment_addr"), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("connect comment-service fail: %v", err)
 	}

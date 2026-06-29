@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"gorm.io/gorm"
 	"ourvideos/user-service/model"
 )
@@ -16,6 +17,15 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 // Create 创建新用户
 func (r *UserRepository) Create(user *model.User) error {
 	return r.DB.Create(user).Error
+}
+
+func (r *UserRepository) FindByOpenID(openID string) (*model.User, error) {
+	var user model.User
+	err := r.DB.Where("open_id = ?", openID).First(&user).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	return &user, err
 }
 
 // FindByUsername 根据用户名查找用户

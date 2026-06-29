@@ -13,6 +13,20 @@ service UserService{
   rpc GetUser(GetUserReq) returns (GetUserResp);
   rpc UserUpdate(UserUpdateReq) returns (UserUpdateResp);
   rpc PswUpdate(PswUpdateReq) returns (PswUpdateResp);
+  rpc OauthLogin(OAuthLoginReq)returns (OAuthLoginResp);
+}
+
+message OAuthLoginReq{
+  string provider=1;
+  string open_id=2;
+  string nickname=3;
+  string avatar=4;
+}
+
+message OAuthLoginResp{
+  uint64 user_id=1;
+  string token=2;
+
 }
 
 message PswUpdateReq{

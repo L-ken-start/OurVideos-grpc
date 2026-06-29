@@ -1,0 +1,10 @@
+jwt:
+  secret: "your-secret-here"
+
+mysql:
+  user_dsn: "root:YOUR_PASSWORD@tcp(127.0.0.1:3306)/user_db?..."
+  # ...
+
+redis:
+  addr: "localhost:6379"
+  # ...

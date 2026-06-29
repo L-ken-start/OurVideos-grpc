@@ -26,6 +26,17 @@ func (s *UserServer) Register(ctx context.Context, req *user.RegisterReq) (*user
 	}, nil
 }
 
+// 第三方登录
+func (s *UserServer) OauthLogin(ctx context.Context, req *user.OAuthLoginReq) (*user.OAuthLoginResp, error) {
+	u, token, err := s.Svc.OAuthLogin(req.Provider, req.OpenId, req.Nickname, req.Avatar)
+	if err != nil {
+		return nil, toGRPCError(err)
+	}
+	return &user.OAuthLoginResp{
+		UserId: uint64(u.ID),
+		Token:  token}, nil
+}
+
 // Login 登录
 func (s *UserServer) Login(ctx context.Context, req *user.LoginReq) (*user.LoginResp, error) {
 	u, token, err := s.Svc.Login(req.Username, req.Password)
